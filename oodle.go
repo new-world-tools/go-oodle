@@ -1,6 +1,7 @@
 package oodle
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -42,7 +43,15 @@ const (
 	AlgoCount       = 14
 )
 
-var dllRe = regexp.MustCompile(`oo2core_9_win64.dll`)
+var (
+	dllName = "oo2core_9_win64.dll"
+	paths   = []string{
+		dllName,
+		filepath.Join(os.TempDir(), "go-oodle", dllName),
+	}
+)
+
+var dllRe = regexp.MustCompile(dllName)
 
 func Compress(input []byte, algo int, compressionLevel int) ([]byte, error) {
 	dll, err := getDll()
@@ -126,7 +135,12 @@ var dllOnce struct {
 
 func getDll() (*syscall.DLL, error) {
 	dllOnce.Do(func() {
-		dll, err := syscall.LoadDLL(dllPath())
+		dllPath, err := resolveDllPath()
+		if err != nil {
+			dllOnce.err = err
+			return
+		}
+		dll, err := syscall.LoadDLL(dllPath)
 
 		dllOnce.dll = dll
 		dllOnce.err = err
@@ -136,10 +150,17 @@ func getDll() (*syscall.DLL, error) {
 }
 
 func IsDllExist() bool {
-	_, err := os.Stat(dllPath())
-	return !os.IsNotExist(err)
+	_, err := resolveDllPath()
+	return err == nil
 }
 
-func dllPath() string {
-	return filepath.Join(os.TempDir(), "go-oodle", "oo2core_9_win64.dll")
+func resolveDllPath() (string, error) {
+	for _, dllPath := range paths {
+		_, err := os.Stat(dllPath)
+		if !os.IsNotExist(err) {
+			return dllPath, nil
+		}
+	}
+
+	return "", fmt.Errorf("`%s` is not resolve", dllName)
 }
