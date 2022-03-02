@@ -71,7 +71,7 @@ func Download() error {
 	//fileName := strings.Join(parts[:len(parts)-2], sep)
 	md5sum := parts[len(parts)-2]
 
-	filePath := dllPath()
+	filePath := getTempDllPath()
 	err = os.MkdirAll(filepath.Dir(filePath), 0777)
 	if err != nil {
 		return err
