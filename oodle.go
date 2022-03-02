@@ -1,6 +1,9 @@
 package oodle
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -38,6 +41,8 @@ const (
 	AlgoLeviathan   = 13
 	AlgoCount       = 14
 )
+
+var dllRe = regexp.MustCompile(`oo2core_9_win64.dll`)
 
 func Compress(input []byte, algo int, compressionLevel int) ([]byte, error) {
 	dll, err := getDll()
@@ -121,11 +126,20 @@ var dllOnce struct {
 
 func getDll() (*syscall.DLL, error) {
 	dllOnce.Do(func() {
-		dll, err := syscall.LoadDLL("oo2core_9_win64.dll")
+		dll, err := syscall.LoadDLL(dllPath())
 
 		dllOnce.dll = dll
 		dllOnce.err = err
 	})
 
 	return dllOnce.dll, dllOnce.err
+}
+
+func IsDllExist() bool {
+	_, err := os.Stat(dllPath())
+	return !os.IsNotExist(err)
+}
+
+func dllPath() string {
+	return filepath.Join(os.TempDir(), "go-oodle", "oo2core_9_win64.dll")
 }

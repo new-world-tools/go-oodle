@@ -10,13 +10,11 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
+	"path/filepath"
 	"strings"
 )
 
 const baseUrl = "https://origin.warframe.com/origin/E926E926"
-
-var DllRe = regexp.MustCompile(`oo2core_[\d]+_win64.dll`)
 
 func Download() error {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", baseUrl, "index.txt.lzma"), nil)
@@ -34,7 +32,7 @@ func Download() error {
 
 	var urlPath string
 	for scanner.Scan() {
-		if DllRe.Match(scanner.Bytes()) {
+		if dllRe.Match(scanner.Bytes()) {
 			sep := ","
 			parts := strings.Split(scanner.Text(), sep)
 			urlPath = strings.Join(parts[:len(parts)-1], sep)
@@ -70,10 +68,16 @@ func Download() error {
 		return errors.New("wrong file name format.")
 	}
 
-	fileName := strings.Join(parts[:len(parts)-2], sep)
+	//fileName := strings.Join(parts[:len(parts)-2], sep)
 	md5sum := parts[len(parts)-2]
 
-	file, err := os.Create(fileName)
+	filePath := dllPath()
+	err = os.MkdirAll(filepath.Dir(filePath), 0777)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
