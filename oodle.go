@@ -1,9 +1,10 @@
 package oodle
 
-import "C"
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -198,115 +199,115 @@ func Decompress(input []byte, outputSize int64) ([]byte, error) {
 	return output, nil
 }
 
-func DecompressChunk(input []byte, outputSize int64) ([]byte, error) {
-	dll, err := getDll()
-	if err != nil {
-		return nil, err
-	}
+//func DecompressChunk(input []byte, outputSize int64) ([]byte, error) {
+//	dll, err := getDll()
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	decoderCreateProc, err := dll.FindProc("OodleLZDecoder_Create")
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//var compressor uintptr = CompressorInvalid
+//	var memory uintptr = 0
+//	var memorySize uintptr = 0
+//
+//	r1, _, err := decoderCreateProc.Call(
+//		-1,
+//		uintptr(outputSize),
+//		memory,
+//		memorySize,
+//	)
+//
+//	if err.(syscall.Errno) != 0 {
+//		return nil, err
+//	}
+//
+//	decodeSomeProc, err := dll.FindProc("OodleLZDecoder_DecodeSome")
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	inputSize := len(input)
+//	output := make([]byte, 20000)
+//	decBuf := make([]byte, 20000)
+//
+//	var decBufPos uintptr = 0
+//	var decBufferSize uintptr = uintptr(inputSize)
+//	var decBufAvail = decBufferSize - decBufPos
+//
+//	r1, _, err = decodeSomeProc.Call(
+//		r1,
+//		uintptr(unsafe.Pointer(&output[0])),
+//		uintptr(unsafe.Pointer(&decBuf[0])),
+//		decBufPos,
+//		decBufferSize,
+//		decBufAvail,
+//
+//		uintptr(unsafe.Pointer(&input[0])),
+//		uintptr(inputSize),
+//		FuzzSafeNo,
+//		CheckCRCNo,
+//		VerbosityNone,
+//		DecodeThreadPhaseAll,
+//	)
+//
+//	if err.(syscall.Errno) != 0 {
+//		return nil, err
+//	}
+//
+//	if r1 == 0 {
+//		return nil, errors.New("decompress failure")
+//	}
+//
+//	return output, nil
+//}
 
-	decoderCreateProc, err := dll.FindProc("OodleLZDecoder_Create")
-	if err != nil {
-		return nil, err
-	}
-
-	//var compressor uintptr = CompressorInvalid
-	var memory uintptr = 0
-	var memorySize uintptr = 0
-
-	r1, _, err := decoderCreateProc.Call(
-		-1,
-		uintptr(outputSize),
-		memory,
-		memorySize,
-	)
-
-	if err.(syscall.Errno) != 0 {
-		return nil, err
-	}
-
-	decodeSomeProc, err := dll.FindProc("OodleLZDecoder_DecodeSome")
-	if err != nil {
-		return nil, err
-	}
-
-	inputSize := len(input)
-	output := make([]byte, 20000)
-	decBuf := make([]byte, 20000)
-
-	var decBufPos uintptr = 0
-	var decBufferSize uintptr = uintptr(inputSize)
-	var decBufAvail = decBufferSize - decBufPos
-
-	r1, _, err = decodeSomeProc.Call(
-		r1,
-		uintptr(unsafe.Pointer(&output[0])),
-		uintptr(unsafe.Pointer(&decBuf[0])),
-		decBufPos,
-		decBufferSize,
-		decBufAvail,
-
-		uintptr(unsafe.Pointer(&input[0])),
-		uintptr(inputSize),
-		FuzzSafeNo,
-		CheckCRCNo,
-		VerbosityNone,
-		DecodeThreadPhaseAll,
-	)
-
-	if err.(syscall.Errno) != 0 {
-		return nil, err
-	}
-
-	if r1 == 0 {
-		return nil, errors.New("decompress failure")
-	}
-
-	return output, nil
-}
-
-func GetCompressionLevelName(compressionLevel int) (string, error) {
-	dll, err := getDll()
-	if err != nil {
-		return "", err
-	}
-
-	proc, err := dll.FindProc("OodleLZ_CompressionLevel_GetName")
-	if err != nil {
-		return "", err
-	}
-
-	r1, _, err := proc.Call(
-		uintptr(compressionLevel),
-	)
-
-	if err.(syscall.Errno) != 0 {
-		return "", err
-	}
-
-	return C.GoString((*C.char)(unsafe.Pointer(r1))), nil
-}
-
-func GetCompressorName(compressor int) (string, error) {
-	dll, err := getDll()
-	if err != nil {
-		return "", err
-	}
-
-	proc, err := dll.FindProc("OodleLZ_Compressor_GetName")
-	if err != nil {
-		return "", err
-	}
-
-	r1, _, err := proc.Call(
-		uintptr(compressor),
-	)
-
-	if err.(syscall.Errno) != 0 {
-		return "", err
-	}
-
-	return C.GoString((*C.char)(unsafe.Pointer(r1))), nil
-}
+//func GetCompressionLevelName(compressionLevel int) (string, error) {
+//	dll, err := getDll()
+//	if err != nil {
+//		return "", err
+//	}
+//
+//	proc, err := dll.FindProc("OodleLZ_CompressionLevel_GetName")
+//	if err != nil {
+//		return "", err
+//	}
+//
+//	r1, _, err := proc.Call(
+//		uintptr(compressionLevel),
+//	)
+//
+//	if err.(syscall.Errno) != 0 {
+//		return "", err
+//	}
+//
+//	return C.GoString((*C.char)(unsafe.Pointer(r1))), nil
+//}
+//
+//func GetCompressorName(compressor int) (string, error) {
+//	dll, err := getDll()
+//	if err != nil {
+//		return "", err
+//	}
+//
+//	proc, err := dll.FindProc("OodleLZ_Compressor_GetName")
+//	if err != nil {
+//		return "", err
+//	}
+//
+//	r1, _, err := proc.Call(
+//		uintptr(compressor),
+//	)
+//
+//	if err.(syscall.Errno) != 0 {
+//		return "", err
+//	}
+//
+//	return C.GoString((*C.char)(unsafe.Pointer(r1))), nil
+//}
 
 var dllOnce struct {
 	sync.Once
@@ -348,4 +349,38 @@ func resolveDllPath() (string, error) {
 
 func getTempDllPath() string {
 	return filepath.Join(os.TempDir(), "go-oodle", dllName)
+}
+
+const dllUrl = "https://github.com/new-world-tools/go-oodle/releases/download/v0.2.1-file/oo2core_9_win64.dll"
+
+func Download() error {
+	req, err := http.NewRequest("GET", dllUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	filePath := getTempDllPath()
+	err = os.MkdirAll(filepath.Dir(filePath), 0777)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
