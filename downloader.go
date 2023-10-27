@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-const dllUrl = "https://github.com/new-world-tools/go-oodle/releases/download/v0.1.2-1/oo2core_9_win64.dll"
+const dllUrl = "https://github.com/new-world-tools/go-oodle/releases/download/untagged-60360a4ffdf148b31c76/oo2core_9_win64.dll"
 
 func Download() error {
 	req, err := http.NewRequest("GET", dllUrl, nil)
