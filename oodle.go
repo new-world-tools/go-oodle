@@ -220,7 +220,7 @@ func resolveLibPath() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("`%s` is not resolve", libName)
+	return "", fmt.Errorf("`%s` could not be resolved", libName)
 }
 
 func getTempDllPath() string {
